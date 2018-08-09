@@ -1,0 +1,39 @@
+[PreviousGenFiles]
+AdvancedFolderStructure=true
+HeaderFileListSize=11
+HeaderFiles#0=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/gpio.h
+HeaderFiles#1=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/adc.h
+HeaderFiles#2=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/dac.h
+HeaderFiles#3=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/dma.h
+HeaderFiles#4=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/spi.h
+HeaderFiles#5=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/tim.h
+HeaderFolderListSize=1
+HeaderPath#0=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc
+SourceFileListSize=9
+SourceFiles#0=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/gpio.c
+SourceFiles#1=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/adc.c
+SourceFiles#2=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/dac.c
+SourceFiles#3=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/dma.c
+SourceFolderListSize=1
+SourcePath#0=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src
+HeaderFiles#6=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/usart.h
+HeaderFiles#7=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/stm32f3xx_it.h
+HeaderFiles#8=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/stm32_assert.h
+HeaderFiles#9=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/stm32f3xx_hal_conf.h
+HeaderFiles#10=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Inc/main.h
+SourceFiles#4=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/spi.c
+SourceFiles#5=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/tim.c
+SourceFiles#6=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/usart.c
+SourceFiles#7=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/stm32f3xx_it.c
+SourceFiles#8=D:/OneDrive - sk-lab/Devel/Software/TrueStudio/AZ-MD01/AZ-MD01/Core/Src/main.c
+HeaderFiles=;
+SourceFiles=;
+
+[PreviousLibFiles]
+LibFiles=Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_gpio.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_exti.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_system.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_adc.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_dma.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_dac.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_spi.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_tim.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_usart.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_rcc.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_bus.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_cortex.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_crs.h;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_utils.h;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_utils.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_exti.c;Drivers/STM32F3xx_HAL_Driver/Inc/stm32f3xx_ll_pwr.h;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_gpio.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_exti.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_adc.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_dma.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_dac.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_spi.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_tim.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_usart.c;Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_rcc.c;Drivers/CMSIS/Device/ST/STM32F3xx/Include/stm32f303x8.h;Drivers/CMSIS/Device/ST/STM32F3xx/Include/stm32f3xx.h;Drivers/CMSIS/Device/ST/STM32F3xx/Include/system_stm32f3xx.h;Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c;Drivers/CMSIS/Include/arm_common_tables.h;Drivers/CMSIS/Include/arm_const_structs.h;Drivers/CMSIS/Include/arm_math.h;Drivers/CMSIS/Include/cmsis_armcc.h;Drivers/CMSIS/Include/cmsis_armcc_V6.h;Drivers/CMSIS/Include/cmsis_gcc.h;Drivers/CMSIS/Include/core_cm0.h;Drivers/CMSIS/Include/core_cm0plus.h;Drivers/CMSIS/Include/core_cm3.h;Drivers/CMSIS/Include/core_cm4.h;Drivers/CMSIS/Include/core_cm7.h;Drivers/CMSIS/Include/core_cmFunc.h;Drivers/CMSIS/Include/core_cmInstr.h;Drivers/CMSIS/Include/core_cmSimd.h;Drivers/CMSIS/Include/core_sc000.h;Drivers/CMSIS/Include/core_sc300.h;
+
+[PreviousUsedTStudioFiles]
+SourceFiles=..\Core\Src\main.c;..\Core\Src\gpio.c;..\Core\Src\adc.c;..\Core\Src\dac.c;..\Core\Src\dma.c;..\Core\Src\spi.c;..\Core\Src\tim.c;..\Core\Src\usart.c;..\Core\Src\stm32f3xx_it.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_utils.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_exti.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_gpio.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_exti.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_adc.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_dma.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_dac.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_spi.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_tim.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_usart.c;../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_ll_rcc.c;../Core\Src/system_stm32f3xx.c;../Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/system_stm32f3xx.c;null;
+HeaderPath=..\Drivers\STM32F3xx_HAL_Driver\Inc;..\Drivers\CMSIS\Device\ST\STM32F3xx\Include;..\Drivers\CMSIS\Include;..\Core\Inc;
+CDefines=USE_FULL_LL_DRIVER;HSE_VALUE:8000000;HSE_STARTUP_TIMEOUT:100;LSE_STARTUP_TIMEOUT:5000;LSE_VALUE:32768;EXTERNAL_CLOCK_VALUE:8000000;HSI_VALUE:8000000;LSI_VALUE:40000;VDD_VALUE:3300;PREFETCH_ENABLE:1;__weak:__attribute__((weak));__packed:__attribute__((__packed__));
+
