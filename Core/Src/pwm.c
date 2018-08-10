@@ -1,6 +1,9 @@
 #include "pwm.h"
 #include "main.h"
 
+#define PWM_DUTY_MAX (95)
+#define PWM_Period_MAX (PWM_DUTY_MAX * PWM_Period / 100)
+
 #define pwm_set_a(val) LL_TIM_OC_SetCompareCH2(PWM_TIM, val)
 #define pwm_set_b(val) LL_TIM_OC_SetCompareCH3(PWM_TIM, val)
 
@@ -15,14 +18,6 @@ void pwm_set_duty(float percent){
 	if(percent > 100.) percent = 100.;
 	if(percent < -100.) percent = -100.;
 
-	if(percent > 0.){
-		pwm_set_a(PWM_Period * percent / 200. + PWM_Period / 2);
-		pwm_set_b(0);
-	}else if(percent < 0){
-		pwm_set_a(0.);
-		pwm_set_b(PWM_Period * -percent / 200. + PWM_Period / 2);
-	}else{
-		pwm_set_a(PWM_Period / 2);
-		pwm_set_b(PWM_Period / 2);
-	}
+	pwm_set_a(PWM_Period_MAX * percent / 200. + PWM_Period_MAX / 2);
+	pwm_set_b(PWM_Period_MAX * -percent / 200. + PWM_Period_MAX / 2);
 }
