@@ -87,7 +87,28 @@ void MX_DAC1_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+void dac_init(void){
+	LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_1);
+	LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_2);
+}
 
+void dac_set_raw(int32_t ch, int32_t val){
+	val &= 0x0FFF;
+
+	switch(ch){
+	case 1:
+		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, val);
+		break;
+
+	case 2:
+		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_2, val);
+		break;
+	}
+}
+
+void dac_set_mv(int32_t ch, int32_t mv){
+	dac_set_raw(ch, mv * 4095 / VREF_MV);
+}
 /* USER CODE END 1 */
 
 /**

@@ -52,7 +52,6 @@
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
-
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
@@ -60,7 +59,9 @@ extern void _Error_Handler(char *, int);
 void MX_DAC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void dac_init(void);
+void dac_set_raw(int32_t ch, int32_t val);
+void dac_set_mv(int32_t ch, int32_t mv);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
