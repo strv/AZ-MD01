@@ -18,6 +18,6 @@ void pwm_set_duty(float percent){
 	if(percent > 100.) percent = 100.;
 	if(percent < -100.) percent = -100.;
 
-	pwm_set_a(PWM_Period_MAX * percent / 200. + PWM_Period_MAX / 2);
-	pwm_set_b(PWM_Period_MAX * -percent / 200. + PWM_Period_MAX / 2);
+	pwm_set_a(PWM_Period_MAX * percent / 200. + PWM_Period / 2);
+	pwm_set_b(PWM_Period_MAX * percent / 200. + PWM_Period / 2);
 }

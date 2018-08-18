@@ -86,6 +86,7 @@ void MX_TIM1_Init(void)
 
   TIM_OC_InitStruct.OCState = LL_TIM_OCSTATE_DISABLE;
   TIM_OC_InitStruct.OCNState = LL_TIM_OCSTATE_DISABLE;
+  TIM_OC_InitStruct.OCPolarity = LL_TIM_OCPOLARITY_LOW;
   LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH3, &TIM_OC_InitStruct);
 
   LL_TIM_OC_EnableFast(TIM1, LL_TIM_CHANNEL_CH3);
