@@ -48,6 +48,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "pwm.h"
+#include "encoder.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -55,7 +56,7 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 int64_t tick;
-const int64_t INTERVAL = 500;
+const int64_t INTERVAL = 10;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,6 +87,13 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	int64_t tick_last = 0;
+	float duty;
+	const float duty_tick_base = 1.;
+	float duty_tick = duty_tick_base;
+	int64_t enc_total;
+	int32_t vel;
+	uint32_t enc_prev = 0;
+	uint32_t enc;
   /* USER CODE END 1 */
 
   /* MCU Configuration----------------------------------------------------------*/
@@ -118,8 +126,11 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   pwm_init();
+  enc_init();
+  dac_init();
+
   pwm_md_enable();
-  pwm_set_duty(50.);
+  pwm_set_duty(0.);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -132,6 +143,22 @@ int main(void)
   /* USER CODE BEGIN 3 */
 	  if(tick >= tick_last + INTERVAL){
 		  tick_last += INTERVAL;
+
+		  enc = enc_get();
+		  vel = enc - enc_prev;
+		  enc_prev = enc;
+		  enc_total += vel;
+
+		  duty += duty_tick;
+		  if(duty > 100.){
+			  duty = 100.;
+			  duty_tick = -duty_tick_base;
+		  }else if(duty < -100.){
+			  duty = -100.;
+			  duty_tick = duty_tick_base;
+		  }
+		  pwm_set_duty(duty);
+		  dac_set_mv(1, vel * 20 + 3300 / 2);
 	  }
   }
   /* USER CODE END 3 */

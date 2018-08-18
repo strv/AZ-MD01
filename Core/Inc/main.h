@@ -112,6 +112,7 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
+#define VREF_MV (3300)
 volatile void tick_inc();
 int64_t tick_get();
 /* USER CODE END Private defines */
