@@ -164,7 +164,6 @@ int main(void)
   /* USER CODE END 3 */
 
 }
-
 static void LL_Init(void)
 {
   
