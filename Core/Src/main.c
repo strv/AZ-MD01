@@ -49,6 +49,8 @@
 /* USER CODE BEGIN Includes */
 #include "pwm.h"
 #include "encoder.h"
+#include "uart_util.h"
+#include "xprintf.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -131,6 +133,9 @@ int main(void)
 
   pwm_md_enable();
   pwm_set_duty(0.);
+
+  uu_init();
+  xputs("AZ-MD01\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -149,16 +154,6 @@ int main(void)
 		  enc_prev = enc;
 		  enc_total += vel;
 
-		  duty += duty_tick;
-		  if(duty > 100.){
-			  duty = 100.;
-			  duty_tick = -duty_tick_base;
-		  }else if(duty < -100.){
-			  duty = -100.;
-			  duty_tick = duty_tick_base;
-		  }
-		  pwm_set_duty(duty);
-		  dac_set_mv(1, vel * 20 + 3300 / 2);
 	  }
   }
   /* USER CODE END 3 */

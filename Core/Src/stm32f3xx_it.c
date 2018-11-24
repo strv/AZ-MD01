@@ -94,19 +94,6 @@ void ADC1_2_IRQHandler(void)
 }
 
 /**
-* @brief This function handles USART2 global interrupt / USART2 wake-up interrupt through EXT line 26.
-*/
-void USART2_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART2_IRQn 0 */
-
-  /* USER CODE END USART2_IRQn 0 */
-  /* USER CODE BEGIN USART2_IRQn 1 */
-
-  /* USER CODE END USART2_IRQn 1 */
-}
-
-/**
 * @brief This function handles TIM6 global and DAC1 underrun error interrupts.
 */
 void TIM6_DAC1_IRQHandler(void)
