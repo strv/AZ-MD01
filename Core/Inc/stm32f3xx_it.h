@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    stm32f3xx_it.h
@@ -30,6 +31,7 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __STM32F3xx_IT_H
@@ -39,21 +41,41 @@
  extern "C" {
 #endif 
 
-/* Includes ------------------------------------------------------------------*/
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
 #include "stm32f3xx.h"
 #include "stm32f3xx_ll_system.h"
 #include "stm32f3xx_ll_gpio.h"
 #include "stm32f3xx_ll_exti.h"
-#include "main.h"
 /* Exported types ------------------------------------------------------------*/
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
+/* USER CODE BEGIN ET */
 
+/* USER CODE END ET */
+
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
+
+/* USER CODE END EC */
+
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
+
+/* USER CODE END EM */
+
+/* Exported functions prototypes ---------------------------------------------*/
 void SysTick_Handler(void);
 void DMA1_Channel1_IRQHandler(void);
 void ADC1_2_IRQHandler(void);
+void TIM1_UP_TIM16_IRQHandler(void);
+void TIM1_CC_IRQHandler(void);
 void TIM6_DAC1_IRQHandler(void);
+void TIM7_DAC2_IRQHandler(void);
+/* USER CODE BEGIN EFP */
+
+/* USER CODE END EFP */
 
 #ifdef __cplusplus
 }

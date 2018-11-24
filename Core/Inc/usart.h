@@ -44,8 +44,6 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f3xx_ll_usart.h"
-#include "stm32f3xx_ll_rcc.h"
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
@@ -55,8 +53,6 @@
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
-
-extern void _Error_Handler(char *, int);
 
 void MX_USART2_UART_Init(void);
 

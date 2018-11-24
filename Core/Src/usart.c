@@ -40,8 +40,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
-#include "gpio.h"
-
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -50,12 +48,13 @@
 
 void MX_USART2_UART_Init(void)
 {
-  LL_USART_InitTypeDef USART_InitStruct;
+  LL_USART_InitTypeDef USART_InitStruct = {0};
 
-  LL_GPIO_InitTypeDef GPIO_InitStruct;
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* Peripheral clock enable */
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
   
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
   /**USART2 GPIO Configuration  
   PA2   ------> USART2_TX
   PA3   ------> USART2_RX 
@@ -88,13 +87,9 @@ void MX_USART2_UART_Init(void)
   USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
   USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_8;
   LL_USART_Init(USART2, &USART_InitStruct);
-
   LL_USART_DisableIT_CTS(USART2);
-
   LL_USART_DisableOverrunDetect(USART2);
-
   LL_USART_ConfigAsyncMode(USART2);
-
   LL_USART_Enable(USART2);
 
 }
@@ -102,13 +97,5 @@ void MX_USART2_UART_Init(void)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

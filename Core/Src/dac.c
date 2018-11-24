@@ -40,8 +40,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "dac.h"
 
-#include "gpio.h"
-
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -49,12 +47,13 @@
 /* DAC1 init function */
 void MX_DAC1_Init(void)
 {
-  LL_DAC_InitTypeDef DAC_InitStruct;
+  LL_DAC_InitTypeDef DAC_InitStruct = {0};
 
-  LL_GPIO_InitTypeDef GPIO_InitStruct;
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* Peripheral clock enable */
   LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_DAC1);
   
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
   /**DAC1 GPIO Configuration  
   PA4   ------> DAC1_OUT1
   PA5   ------> DAC1_OUT2 
@@ -68,20 +67,17 @@ void MX_DAC1_Init(void)
   NVIC_SetPriority(TIM6_DAC1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
   NVIC_EnableIRQ(TIM6_DAC1_IRQn);
 
-    /**DAC channel OUT1 config 
-    */
+  /**DAC channel OUT1 config 
+  */
   DAC_InitStruct.TriggerSource = LL_DAC_TRIG_SOFTWARE;
   DAC_InitStruct.WaveAutoGeneration = LL_DAC_WAVE_AUTO_GENERATION_NONE;
   DAC_InitStruct.OutputBuffer = LL_DAC_OUTPUT_BUFFER_ENABLE;
   LL_DAC_Init(DAC1, LL_DAC_CHANNEL_1, &DAC_InitStruct);
-
   LL_DAC_DisableTrigger(DAC1, LL_DAC_CHANNEL_1);
-
-    /**DAC channel OUT2 config 
-    */
+  /**DAC channel OUT2 config 
+  */
   DAC_InitStruct.OutputBuffer = LL_DAC_OUTPUT_SWITCH_ENABLE;
   LL_DAC_Init(DAC1, LL_DAC_CHANNEL_2, &DAC_InitStruct);
-
   LL_DAC_DisableTrigger(DAC1, LL_DAC_CHANNEL_2);
 
 }
@@ -110,13 +106,5 @@ void dac_set_mv(int32_t ch, int32_t mv){
 	dac_set_raw(ch, mv * 4095 / VREF_MV);
 }
 /* USER CODE END 1 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
