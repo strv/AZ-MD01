@@ -14,5 +14,5 @@ void enc_init(void){
 }
 
 uint32_t enc_get(void){
-	LL_TIM_GetCounter(ENC_TIM);
+	return LL_TIM_GetCounter(ENC_TIM);
 }
