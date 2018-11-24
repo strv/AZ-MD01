@@ -1,0 +1,5 @@
+TrueSTUDIO
+*.settings
+Debug
+Release
+*.elf*
