@@ -212,7 +212,10 @@ inline float adc_get_cur_ave(){
 		a += ((float)adc1_results[5 + i*10] - cur_zero_a);
 		b += ((float)adc1_results[1 + i*10] - cur_zero_b);
 	}
-	return (a - b) / 2. * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
+	if(a < 0){
+		return a * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
+	}
+	return b * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
 }
 
 inline int16_t adc_get_cur_zero(uint32_t side){
