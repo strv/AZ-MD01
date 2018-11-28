@@ -96,7 +96,7 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define PWM_Period 1280
+#define PWM_Period 2560
 #define SPI_CS_Pin LL_GPIO_PIN_1
 #define SPI_CS_GPIO_Port GPIOF
 #define ADC_CUR_A_Pin LL_GPIO_PIN_0
@@ -117,6 +117,8 @@ void Error_Handler(void);
 #define PWM_A_GPIO_Port GPIOA
 #define PWM_B_Pin LL_GPIO_PIN_10
 #define PWM_B_GPIO_Port GPIOA
+#define GPIO_EXT_Pin LL_GPIO_PIN_11
+#define GPIO_EXT_GPIO_Port GPIOA
 #define SWDIO_Pin LL_GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
 #define SWCLK_Pin LL_GPIO_PIN_14

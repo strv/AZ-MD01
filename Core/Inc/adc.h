@@ -57,7 +57,15 @@
 void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void adc_init(void);
+int16_t adc_get(uint32_t ch);
+float adc_get_vbatt();
+void adc_cur_cal_proc();
+int16_t adc_get_cur_zero(uint32_t side);
+float adc_get_cur();
+float adc_get_cur_ave();
+float adc_get_ext();
+float adc_get_ext_rate();
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

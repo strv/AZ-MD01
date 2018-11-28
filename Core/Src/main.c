@@ -76,7 +76,8 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 volatile int64_t tick;
-const int64_t INTERVAL = 10;
+const int64_t INTERVAL = 100;
+const int32_t ADC_CAL_DURATION = 50;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -90,6 +91,27 @@ void tick_inc(){
 int64_t tick_get(){
 	return tick;
 }
+
+bool cmd_duty_set_func(int32_t argc,int32_t* argv){
+	float duty = 0.;
+	if(argc != 1){
+		return false;
+	}
+	if(argv[0] < -100){
+		duty = -100.;
+	}else if(argv[0] > 100){
+		duty = 100.;
+	}else{
+		duty = argv[0];
+	}
+	pwm_set_duty(duty);
+	return true;
+}
+UU_ConsoleCommand cmd_duty_set = {
+		"DUTY",
+		cmd_duty_set_func,
+		"DUTY [duty]\r\nSet PWM duty. "
+};
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -109,6 +131,9 @@ int main(void)
 	int32_t vel;
 	uint32_t enc_prev = 0;
 	uint32_t enc;
+	float cur=0.;
+	float cur_prev=0.;
+	float cur_fo=0.1;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -150,15 +175,44 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
   LL_SYSTICK_EnableIT();
-  pwm_init();
-  enc_init();
-  dac_init();
-
-  pwm_md_enable();
-  pwm_set_duty(0.);
 
   uu_init();
+  uu_push_command(&cmd_duty_set);
   xputs("AZ-MD01\r\n");
+
+  adc_init();
+
+  pwm_init();
+  pwm_set_duty(0.);
+
+  enc_init();
+  dac_init();
+  pwm_md_enable();
+
+  {
+	  xputs("Start ADC calibration...");
+	  int32_t adc_cal_cnt = 0;
+	  int32_t cz_a, cz_b, cz_a_prev, cz_b_prev;
+	  while(true){
+		  adc_cur_cal_proc();
+		  cz_a = adc_get_cur_zero(0);
+		  cz_b = adc_get_cur_zero(1);
+		  if(abs(cz_a - cz_a_prev) < 1 && abs(cz_b - cz_b_prev) < 1){
+			  adc_cal_cnt++;
+			  if(adc_cal_cnt > 10){
+				  break;
+			  }
+		  }else{
+			  adc_cal_cnt = 0;
+		  }
+		  cz_a_prev = cz_a;
+		  cz_b_prev = cz_b;
+		  LL_mDelay(1);
+	  }
+	  xputs("Done!!!\r\n");
+	  xprintf("Current zero value : %d %d\r\n", adc_get_cur_zero(0), adc_get_cur_zero(1));
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -177,6 +231,16 @@ int main(void)
 		  enc_prev = enc;
 		  enc_total += vel;
 
+		  xprintf("ADC :\r\n");
+		  for(volatile int i = 0; i < 20; i++){
+			  xprintf("\t%02d : %4d\r\n", i, adc_get(i));
+		  }
+		  xputs("\r\n");
+		  xprintf("V batt  : %5d\r\n", (int32_t)(adc_get_vbatt() * 1000.));
+		  cur = cur_prev * (1. - cur_fo) + adc_get_cur_ave() * cur_fo;
+		  cur_prev = cur;
+		  xprintf("Current : %5d %5d\r\n", (int32_t)(adc_get_cur() * 1000.), (int32_t)(cur * 1000.));
+		  xprintf("ADC EXT : %5d %5d\r\n", (int32_t)(adc_get_ext() * 1000.), (int32_t)(adc_get_ext_rate() * 100.));
 	  }
 	  uu_proc_command();
   }
@@ -212,7 +276,7 @@ void SystemClock_Config(void)
     
   }
   LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
-  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
   LL_RCC_SetAPB2Prescaler(LL_RCC_APB1_DIV_2);
   LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
 
@@ -225,7 +289,6 @@ void SystemClock_Config(void)
   LL_SYSTICK_SetClkSource(LL_SYSTICK_CLKSOURCE_HCLK);
   LL_SetSystemCoreClock(64000000);
   LL_RCC_SetTIMClockSource(LL_RCC_TIM1_CLKSOURCE_PLL);
-  LL_RCC_SetADCClockSource(LL_RCC_ADC12_CLKSRC_PLL_DIV_1);
 }
 
 /* USER CODE BEGIN 4 */

@@ -41,7 +41,17 @@
 #include "adc.h"
 
 /* USER CODE BEGIN 0 */
-
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+volatile static int32_t phase = 0;
+#define ADC_SAM_NUM (16)
+#define ADC_BUFF_LEN (10 * ADC_SAM_NUM)
+volatile static int16_t adc1_results[ADC_BUFF_LEN];
+static float cur_zero_a;
+static float cur_zero_b;
+static float vref;
+static const float cur_zero_lpf_fo = 0.01;
 /* USER CODE END 0 */
 
 /* ADC1 init function */
@@ -78,7 +88,7 @@ void MX_ADC1_Init(void)
   /* ADC1 Init */
   LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_1, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
 
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PRIORITY_HIGH);
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PRIORITY_VERYHIGH);
 
   LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MODE_CIRCULAR);
 
@@ -100,7 +110,7 @@ void MX_ADC1_Init(void)
   ADC_InitStruct.DataAlignment = LL_ADC_DATA_ALIGN_RIGHT;
   ADC_InitStruct.LowPowerMode = LL_ADC_LP_MODE_NONE;
   LL_ADC_Init(ADC1, &ADC_InitStruct);
-  ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_SOFTWARE;
+  ADC_REG_InitStruct.TriggerSource = LL_ADC_REG_TRIG_EXT_TIM1_TRGO2;
   ADC_REG_InitStruct.SequencerLength = LL_ADC_REG_SEQ_SCAN_ENABLE_5RANKS;
   ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
   ADC_REG_InitStruct.ContinuousMode = LL_ADC_REG_CONV_SINGLE;
@@ -109,9 +119,10 @@ void MX_ADC1_Init(void)
   LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
   LL_ADC_DisableIT_EOC(ADC1);
   LL_ADC_DisableIT_EOS(ADC1);
-  ADC_CommonInitStruct.CommonClock = LL_ADC_CLOCK_ASYNC_DIV1;
+  ADC_CommonInitStruct.CommonClock = LL_ADC_CLOCK_SYNC_PCLK_DIV1;
   ADC_CommonInitStruct.Multimode = LL_ADC_MULTI_INDEPENDENT;
   LL_ADC_CommonInit(__LL_ADC_COMMON_INSTANCE(ADC1), &ADC_CommonInitStruct);
+  LL_ADC_REG_SetTriggerEdge(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
   /**Configure Regular Channel 
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_1);
@@ -125,12 +136,12 @@ void MX_ADC1_Init(void)
   /**Configure Regular Channel 
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, LL_ADC_CHANNEL_11);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_11, LL_ADC_SAMPLINGTIME_7CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_11, LL_ADC_SAMPLINGTIME_1CYCLE_5);
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_11, LL_ADC_SINGLE_ENDED);
   /**Configure Regular Channel 
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_4, LL_ADC_CHANNEL_12);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_12, LL_ADC_SAMPLINGTIME_7CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_12, LL_ADC_SAMPLINGTIME_1CYCLE_5);
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_12, LL_ADC_SINGLE_ENDED);
   /**Configure Regular Channel 
   */
@@ -142,9 +153,91 @@ void MX_ADC1_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
-void adc_init(void){
-
+void ADC1_2_IRQHandler(void)
+{
+	phase++;
+	phase &= ADC_SAM_NUM - 1;
+	LL_ADC_ClearFlag_EOS(ADC1);
 }
+
+void adc_init(void){
+	LL_ADC_EnableInternalRegulator(ADC1);
+	LL_mDelay(1);
+	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_1, ADC_BUFF_LEN);
+	LL_DMA_ConfigAddresses(	DMA1,
+							LL_DMA_CHANNEL_1,
+							LL_ADC_DMA_GetRegAddr(ADC1, LL_ADC_DMA_REG_REGULAR_DATA),
+							(uint32_t)adc1_results,
+							LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_1);
+	LL_ADC_StartCalibration(ADC1, LL_ADC_SINGLE_ENDED);
+	while(LL_ADC_IsCalibrationOnGoing(ADC1));
+	LL_mDelay(1);
+	LL_ADC_Enable(ADC1);
+	LL_mDelay(1);
+	//LL_ADC_EnableIT_EOC(ADC1);
+	LL_ADC_EnableIT_EOS(ADC1);
+	LL_ADC_REG_StartConversion(ADC1);
+}
+
+inline int16_t adc_get(uint32_t ch){
+	if(ch >= ADC_BUFF_LEN)return -1;
+	return adc1_results[ch];
+}
+
+inline float adc_get_vbatt(){
+	float v = 0.;
+	for(int i = 2; i < ADC_BUFF_LEN; i+=5){
+		v += (float)adc1_results[i];
+	}
+	return v * 1.23 * 11. / vref / (ADC_SAM_NUM * 2);
+}
+
+void adc_cur_cal_proc(){
+	cur_zero_a = cur_zero_a * (1. - cur_zero_lpf_fo) + ((float)adc1_results[5 + phase / 2 * 10]) * cur_zero_lpf_fo;
+	cur_zero_b = cur_zero_b * (1. - cur_zero_lpf_fo) + ((float)adc1_results[1 + phase / 2 * 10]) * cur_zero_lpf_fo;
+	vref = vref * (1. - cur_zero_lpf_fo) + (float)adc1_results[4 + phase / 2 * 10] * cur_zero_lpf_fo;
+}
+
+inline float adc_get_cur(){
+	float a = ((float)adc1_results[5 + phase / 2 * 10] - cur_zero_a);
+	float b = ((float)adc1_results[1 + phase / 2 * 10] - cur_zero_b);
+	return (a - b) / 2. * 1.23 / vref / 0.1 / 4.7;
+}
+
+inline float adc_get_cur_ave(){
+	float a = 0.;
+	float b = 0.;
+	for(int i = 0; i < ADC_SAM_NUM; i++){
+		a += ((float)adc1_results[5 + i*10] - cur_zero_a);
+		b += ((float)adc1_results[1 + i*10] - cur_zero_b);
+	}
+	return (a - b) / 2. * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
+}
+
+inline int16_t adc_get_cur_zero(uint32_t side){
+	if(side == 0){
+		return cur_zero_a;
+	}
+	return cur_zero_b;
+}
+
+inline float adc_get_ext(){
+	float v = 0.;
+	for(int i = 3; i < ADC_BUFF_LEN; i+=5){
+		v += (float)adc1_results[i];
+	}
+	return v * 1.23 / vref / (ADC_SAM_NUM * 2);
+}
+
+inline float adc_get_ext_rate(){
+	float v = 0.;
+	for(int i = 3; i < ADC_BUFF_LEN; i+=5){
+		v += (float)adc1_results[i];
+	}
+	return v / 4095. / (ADC_SAM_NUM * 2);
+}
+
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
