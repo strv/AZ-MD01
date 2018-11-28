@@ -213,6 +213,7 @@ int main(void)
 	  xprintf("Current zero value : %d %d\r\n", adc_get_cur_zero(0), adc_get_cur_zero(1));
   }
 
+  ctrl_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
