@@ -88,7 +88,7 @@ void dac_init(void){
 	LL_DAC_Enable(DAC1, LL_DAC_CHANNEL_2);
 }
 
-void dac_set_raw(int32_t ch, int32_t val){
+inline void dac_set_raw(int32_t ch, int32_t val){
 	val &= 0x0FFF;
 
 	switch(ch){
@@ -102,7 +102,7 @@ void dac_set_raw(int32_t ch, int32_t val){
 	}
 }
 
-void dac_set_mv(int32_t ch, int32_t mv){
+inline void dac_set_mv(int32_t ch, int32_t mv){
 	dac_set_raw(ch, mv * 4095 / VREF_MV);
 }
 /* USER CODE END 1 */
