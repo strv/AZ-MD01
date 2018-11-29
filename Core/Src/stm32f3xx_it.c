@@ -137,7 +137,6 @@ void TIM6_DAC1_IRQHandler(void)
 	if(LL_TIM_IsActiveFlag_UPDATE(CTRL_CUR_TIM)){
 		ctrl_cur_irq();
 		LL_TIM_ClearFlag_UPDATE(CTRL_CUR_TIM);
-		LL_GPIO_TogglePin(GPIO_EXT_GPIO_Port, GPIO_EXT_Pin);
 	}
   /* USER CODE END TIM6_DAC1_IRQn 0 */
   
