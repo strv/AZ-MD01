@@ -52,7 +52,9 @@
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
-
+#define gpio_ext_toggle()	LL_GPIO_TogglePin(GPIO_EXT_GPIO_Port, GPIO_EXT_Pin)
+#define gpio_ext_set()		LL_GPIO_SetOutputPin(GPIO_EXT_GPIO_Port, GPIO_EXT_Pin)
+#define gpio_ext_reset()	LL_GPIO_ResetOutputPin(GPIO_EXT_GPIO_Port, GPIO_EXT_Pin)
 /* USER CODE END Private defines */
 
 void MX_GPIO_Init(void);
