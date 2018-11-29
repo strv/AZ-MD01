@@ -1,7 +1,7 @@
 #include "pwm.h"
 #include "main.h"
 
-#define PWM_DUTY_MAX (95)
+#define PWM_DUTY_MAX (99)
 #define PWM_Period_MAX (PWM_DUTY_MAX * PWM_Period / 100)
 #define PWM_ADC_OFFSET (0)
 
