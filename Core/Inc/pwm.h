@@ -15,6 +15,6 @@
 
 void pwm_init(void);
 void pwm_set_duty(float percent);
-
+void pwm_set_duty_nmrzd(float val);
 
 #endif /* INC_PWM_H_ */

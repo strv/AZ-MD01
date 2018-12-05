@@ -54,6 +54,7 @@
 #include "encoder.h"
 #include "uart_util.h"
 #include "xprintf.h"
+#include "control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -112,6 +113,42 @@ UU_ConsoleCommand cmd_duty_set = {
 		cmd_duty_set_func,
 		"DUTY [duty]\r\nSet PWM duty. "
 };
+
+bool cmd_set_cur_func(int32_t argc, int32_t* argv){
+	ctrl_set_cur((float)argv[0] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_cur = {
+		"SETCUR",
+		cmd_set_cur_func,
+		"SETCUR [current in mA]\r\nSet target current in current control mode."
+};
+
+bool cmd_set_cur_gain_func(int32_t argc, int32_t* argv){
+	if(argc != 3){
+		return false;
+	}
+	ctrl_set_cur_gain((float)argv[0] / 1000., (float)argv[1] / 1000., (float)argv[2] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_cur_gain = {
+		"CURGAIN",
+		cmd_set_cur_gain_func,
+		"CURGAIN [kp] [ti] [td]\r\nAll value are divide with 1000."
+};
+
+bool cmd_set_mode_func(int32_t argc, int32_t* argv){
+	if(argc != 1){
+		return false;
+	}
+	ctrl_set_mode(argv[0]);
+	return true;
+}
+UU_ConsoleCommand cmd_set_mode = {
+		"MODE",
+		cmd_set_mode_func,
+		"MODE [mode number]\r\n0 : DUTY\r\n1 : CURRENT\r\n2 : SPEED with BEMF\r\n3 : SPEED with ENCODER"
+};
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,8 +160,7 @@ UU_ConsoleCommand cmd_duty_set = {
   * @brief  The application entry point.
   * @retval int
   */
-int main(void)
-{
+int main(void){
   /* USER CODE BEGIN 1 */
 	int64_t tick_last = 0;
 	int64_t enc_total;
@@ -133,7 +169,7 @@ int main(void)
 	uint32_t enc;
 	float cur=0.;
 	float cur_prev=0.;
-	float cur_fo=0.1;
+	float cur_fo=0.2;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -178,6 +214,9 @@ int main(void)
 
   uu_init();
   uu_push_command(&cmd_duty_set);
+  uu_push_command(&cmd_set_cur);
+  uu_push_command(&cmd_set_cur_gain);
+  uu_push_command(&cmd_set_mode);
   xputs("AZ-MD01\r\n");
 
   adc_init();
@@ -231,12 +270,13 @@ int main(void)
 		  vel = enc - enc_prev;
 		  enc_prev = enc;
 		  enc_total += vel;
-
+/*
 		  xprintf("ADC :\r\n");
 		  for(volatile int i = 0; i < 20; i++){
 			  xprintf("\t%02d : %4d\r\n", i, adc_get(i));
 		  }
 		  xputs("\r\n");
+*/
 		  xprintf("V batt  : %5d\r\n", (int32_t)(adc_get_vbatt() * 1000.));
 		  cur = cur_prev * (1. - cur_fo) + adc_get_cur_ave() * cur_fo;
 		  cur_prev = cur;

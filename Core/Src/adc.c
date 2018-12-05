@@ -45,7 +45,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 volatile static int32_t phase = 0;
-#define ADC_SAM_NUM (16)
+#define ADC_SAM_NUM (5)
 #define ADC_BUFF_LEN (10 * ADC_SAM_NUM)
 volatile static int16_t adc1_results[ADC_BUFF_LEN];
 static float cur_zero_a;
@@ -200,9 +200,15 @@ void adc_cur_cal_proc(){
 }
 
 inline float adc_get_cur(){
-	float a = ((float)adc1_results[5 + phase / 2 * 10] - cur_zero_a);
-	float b = ((float)adc1_results[1 + phase / 2 * 10] - cur_zero_b);
-	return (a - b) / 2. * 1.23 / vref / 0.1 / 4.7;
+	float a = ((float)adc1_results[5 + phase * 10] - cur_zero_a);
+	float b = ((float)adc1_results[1 + phase * 10] - cur_zero_b);
+	/*
+	if(a < b){
+		return a * 1.23 / vref / 0.1 / 4.7;
+	}
+	return -b * 1.23 / vref / 0.1 / 4.7;
+	*/
+	return (a - b) * 1.23 / 2. / vref / 0.1 / 4.7;
 }
 
 inline float adc_get_cur_ave(){
@@ -212,10 +218,13 @@ inline float adc_get_cur_ave(){
 		a += ((float)adc1_results[5 + i*10] - cur_zero_a);
 		b += ((float)adc1_results[1 + i*10] - cur_zero_b);
 	}
-	if(a < 0){
+	/*
+	if(a < b){
 		return a * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
 	}
-	return b * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
+	return -b * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
+	*/
+	return (a - b) * 1.23 / 2. / vref / 0.1 / 4.7 / ADC_SAM_NUM;
 }
 
 inline int16_t adc_get_cur_zero(uint32_t side){

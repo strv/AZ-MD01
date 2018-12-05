@@ -89,7 +89,9 @@ void dac_init(void){
 }
 
 inline void dac_set_raw(int32_t ch, int32_t val){
-	val &= 0x0FFF;
+	if(val > 4095){
+		val = 4095;
+	}
 
 	switch(ch){
 	case 1:
