@@ -66,7 +66,9 @@ int16_t adc_get_cur_zero(uint32_t side);
 float adc_get_cur();
 float adc_get_cur_ave();
 float adc_get_ext();
+float adc_get_ext_ave();
 float adc_get_ext_rate();
+float adc_get_ext_rate_ave();
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

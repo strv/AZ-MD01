@@ -49,14 +49,19 @@ static int32_t phase = 0;
 int32_t adc1_results[ADC_BUFF_LEN];
 static float cur_zero_a;
 static float cur_zero_b;
-static float vref = 1526.3181818181818181818181818182;
+const static float vref_real = 1.23;	// vref voltage in volt
+static float vref_raw = 1526.3181818181818181818181818182;	// vref voltage in ADC raw value
 static int32_t cur_zero_a_i;
 static int32_t cur_zero_b_i;
 static const float cur_zero_lpf_fo = 0.01;
 static float vbatt_gain;
 static float cur_gain;
-const static float ext_rate_gain = 0.00012210012210012210012210012210012;
 static float ext_gain;
+const static float ext_rate_gain = 0.00012210012210012210012210012210012;	// 1.0 / (4095.0 * 2.0)
+static float ext_gain;
+const static float r_sense = 0.1;
+const static float cur_amp_gain = 3.3;
+const static float vbatt_amp_gain = 1. / 11.;
 /* USER CODE END 0 */
 
 /* ADC1 init function */
@@ -198,21 +203,21 @@ inline float adc_get_vbatt(){
 }
 
 inline float adc_get_vbatt_ave(){
-	float v = 0.;
+	int32_t v = 0.;
 	for(int i = 2; i < ADC_BUFF_LEN; i+=5){
-		v += (float)adc1_results[i];
+		v += adc1_results[i];
 	}
-	return v * 1.23 * 11. / vref / (ADC_SAM_NUM * 2);
+	return v * vbatt_gain / ADC_SAM_NUM;
 }
 
 void adc_cur_cal_proc(){
 	cur_zero_a = cur_zero_a * (1. - cur_zero_lpf_fo) + ((float)adc1_results[5 + phase / 2 * 10]) * cur_zero_lpf_fo;
 	cur_zero_b = cur_zero_b * (1. - cur_zero_lpf_fo) + ((float)adc1_results[1 + phase / 2 * 10]) * cur_zero_lpf_fo;
-	vref = vref * (1. - cur_zero_lpf_fo) + (float)adc1_results[4 + phase / 2 * 10] * cur_zero_lpf_fo;
+	vref_raw = vref_raw * (1. - cur_zero_lpf_fo) + (float)adc1_results[4 + phase / 2 * 10] * cur_zero_lpf_fo;
 	cur_zero_a_i = cur_zero_a;
 	cur_zero_b_i = cur_zero_b;
-	vbatt_gain = 6.765 / vref;
-	cur_gain = 1.23 / vref / 0.1 / 4.7;
+	vbatt_gain = vref_real / vref_raw / vbatt_amp_gain / 2.;	//Vbatt は、2つのADCの結果を毎回使えるのでゲインを半分にしておく
+	cur_gain = vref_real / vref_raw / r_sense / cur_amp_gain;
 }
 
 inline float adc_get_cur(){
@@ -231,13 +236,21 @@ inline float adc_get_cur(){
 }
 
 inline float adc_get_cur_ave(){
-	float a = 0.;
-	float b = 0.;
-	for(int i = 0; i < ADC_SAM_NUM; i++){
-		a += ((float)adc1_results[5 + i*10] - cur_zero_a);
-		b += ((float)adc1_results[1 + i*10] - cur_zero_b);
+	int32_t a = 0;
+	int32_t b = 0;
+	float gain, gain_inv;
+	gain = pwm_get_dir() * 5. + 0.5;
+	if(gain > 1.){
+		gain = 1.;
+	}else if(gain < 0.){
+		gain = 0.;
 	}
-	return (a - b) * 1.23 / 2. / vref / 0.1 / 4.7 / ADC_SAM_NUM;
+	gain_inv = 1. - gain;
+	for(int i = 0; i < ADC_SAM_NUM; i++){
+		a += adc1_results[5 + i*10] - cur_zero_a_i;
+		b += cur_zero_b_i - adc1_results[1 + i*10];
+	}
+	return (a * gain_inv + b * gain) * cur_gain / ADC_SAM_NUM;
 }
 
 inline int16_t adc_get_cur_zero(uint32_t side){
@@ -252,20 +265,30 @@ inline float adc_get_ext(){
 	for(int i = 3; i < ADC_BUFF_LEN; i+=5){
 		v += (float)adc1_results[i];
 	}
-	return v * 1.23 / vref / (ADC_SAM_NUM * 2);
+	return v * 1.23 / vref_raw / (ADC_SAM_NUM * 2);
 }
 
+/**
+ * \fn
+ * 外部ADC入力端子の値を割合で取得する関数。最新の値だけを使う。
+ * \return 0.0 to 1.0
+ **/
 inline float adc_get_ext_rate(){
 	//return (float)(adc1_results[3] + adc1_results[8]) / 4095. / 2.;
 	return (float)(adc1_results[3 + phase * 10] + adc1_results[8 + phase * 10]) * ext_rate_gain;
 }
 
+/**
+ * \fn
+ * 外部ADC入力端子の値を割合で取得する関数。DMAバッファ中の全部の値をつかって平均を取る。
+ * \return 0.0 to 1.0
+ */
 inline float adc_get_ext_rate_ave(){
-	float v = 0.;
+	int32_t v = 0.;
 	for(int i = 3; i < ADC_BUFF_LEN; i+=5){
-		v += (float)adc1_results[i];
+		v += adc1_results[i];
 	}
-	return v / 4095. / (ADC_SAM_NUM * 2);
+	return (float)v * ext_rate_gain / ADC_SAM_NUM;
 }
 
 /* USER CODE END 1 */
