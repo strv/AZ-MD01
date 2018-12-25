@@ -89,19 +89,7 @@ void dac_init(void){
 }
 
 inline void dac_set_raw(int32_t ch, int32_t val){
-	if(val > 4095){
-		val = 4095;
-	}
-
-	switch(ch){
-	case 1:
-		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_1, val);
-		break;
-
-	case 2:
-		LL_DAC_ConvertData12RightAligned(DAC1, LL_DAC_CHANNEL_2, val);
-		break;
-	}
+	LL_DAC_ConvertData12RightAligned(DAC1, ch, val);
 }
 
 inline void dac_set_mv(int32_t ch, int32_t mv){

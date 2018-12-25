@@ -50,6 +50,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <math.h>
 #include "pwm.h"
 #include "encoder.h"
 #include "uart_util.h"
@@ -94,18 +95,10 @@ int64_t tick_get(){
 }
 
 bool cmd_duty_set_func(int32_t argc,int32_t* argv){
-	float duty = 0.;
 	if(argc != 1){
 		return false;
 	}
-	if(argv[0] < -100){
-		duty = -100.;
-	}else if(argv[0] > 100){
-		duty = 100.;
-	}else{
-		duty = argv[0];
-	}
-	pwm_set_duty(duty);
+	pwm_set_duty(argv[0]);
 	return true;
 }
 UU_ConsoleCommand cmd_duty_set = {
@@ -115,6 +108,9 @@ UU_ConsoleCommand cmd_duty_set = {
 };
 
 bool cmd_set_cur_func(int32_t argc, int32_t* argv){
+	if(argc != 1){
+		return false;
+	}
 	ctrl_set_cur((float)argv[0] / 1000.);
 	return true;
 }
@@ -128,13 +124,59 @@ bool cmd_set_cur_gain_func(int32_t argc, int32_t* argv){
 	if(argc != 3){
 		return false;
 	}
-	ctrl_set_cur_gain((float)argv[0] / 1000., (float)argv[1] / 1000., (float)argv[2] / 1000.);
+	ctrl_set_cur_gain((float)argv[0] / 1000., (float)argv[1] / 1000000., (float)argv[2] / 1000.);
 	return true;
 }
 UU_ConsoleCommand cmd_set_cur_gain = {
 		"CURGAIN",
 		cmd_set_cur_gain_func,
 		"CURGAIN [kp] [ti] [td]\r\nAll value are divide with 1000."
+};
+
+bool cmd_set_vel_func(int32_t argc, int32_t* argv){
+	ctrl_set_vel((float)argv[0] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_vel = {
+		"SETVEL",
+		cmd_set_vel_func,
+		"SETVEL [velocity in mm/s]\r\nSet target velocity in velocity control mode."
+};
+
+bool cmd_set_vel_gain_func(int32_t argc, int32_t* argv){
+	if(argc != 3){
+		return false;
+	}
+	ctrl_set_vel_gain((float)argv[0] / 1000., (float)argv[1] / 1000000., (float)argv[2] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_vel_gain = {
+		"VELGAIN",
+		cmd_set_vel_gain_func,
+		"VELGAIN [kp] [ti] [td]\r\nAll value are divide with 1000."
+};
+
+bool cmd_set_pos_func(int32_t argc, int32_t* argv){
+	ctrl_set_pos((float)argv[0] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_pos = {
+		"SETPOS",
+		cmd_set_pos_func,
+		"SETPOS [position in mm]\r\nSet target position in position control mode."
+};
+
+bool cmd_set_pos_gain_func(int32_t argc, int32_t* argv){
+	if(argc != 3){
+		return false;
+	}
+	ctrl_set_pos_gain((float)argv[0] / 1000., (float)argv[1] / 1000000., (float)argv[2] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_pos_gain = {
+		"POSGAIN",
+		cmd_set_pos_gain_func,
+		"POSGAIN [kp] [ti] [td]\r\nAll value are divide with 1000000."
 };
 
 bool cmd_set_mode_func(int32_t argc, int32_t* argv){
@@ -149,6 +191,45 @@ UU_ConsoleCommand cmd_set_mode = {
 		cmd_set_mode_func,
 		"MODE [mode number]\r\n0 : DUTY\r\n1 : CURRENT\r\n2 : SPEED with BEMF\r\n3 : SPEED with ENCODER"
 };
+
+bool cmd_set_cur_lpf_func(int32_t argc, int32_t* argv){
+	if(argc != 1){
+		return false;
+	}
+	ctrl_set_cur_lpf((float)argv[0] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_cur_lpf = {
+		"CURLPF",
+		cmd_set_cur_lpf_func,
+		"CURLPF [fo]\r\n0 : Relative frequency timed by 1000"
+};
+
+bool cmd_set_vel_lpf_func(int32_t argc, int32_t* argv){
+	if(argc != 1){
+		return false;
+	}
+	ctrl_set_vel_lpf((float)argv[0] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_vel_lpf = {
+		"VELLPF",
+		cmd_set_vel_lpf_func,
+		"VELLPF [fo]\r\n0 : Relative frequency timed by 1000"
+};
+
+bool cmd_set_pos_lpf_func(int32_t argc, int32_t* argv){
+	if(argc != 1){
+		return false;
+	}
+	ctrl_set_pos_lpf((float)argv[0] / 1000.);
+	return true;
+}
+UU_ConsoleCommand cmd_set_pos_lpf = {
+		"POSLPF",
+		cmd_set_pos_lpf_func,
+		"POSLPF [fo]\r\n0 : Relative frequency timed by 1000"
+};
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -160,7 +241,8 @@ UU_ConsoleCommand cmd_set_mode = {
   * @brief  The application entry point.
   * @retval int
   */
-int main(void){
+int main(void)
+{
   /* USER CODE BEGIN 1 */
 	int64_t tick_last = 0;
 	int64_t enc_total;
@@ -170,6 +252,8 @@ int main(void){
 	float cur=0.;
 	float cur_prev=0.;
 	float cur_fo=0.2;
+	float pos = 0.05;
+	float pos_freq = 5.0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -216,7 +300,14 @@ int main(void){
   uu_push_command(&cmd_duty_set);
   uu_push_command(&cmd_set_cur);
   uu_push_command(&cmd_set_cur_gain);
+  uu_push_command(&cmd_set_vel);
+  uu_push_command(&cmd_set_vel_gain);
+  uu_push_command(&cmd_set_pos);
+  uu_push_command(&cmd_set_pos_gain);
   uu_push_command(&cmd_set_mode);
+  uu_push_command(&cmd_set_cur_lpf);
+  uu_push_command(&cmd_set_vel_lpf);
+  uu_push_command(&cmd_set_pos_lpf);
   xputs("AZ-MD01\r\n");
 
   adc_init();
@@ -229,6 +320,7 @@ int main(void){
   pwm_md_enable();
 
   {
+	  pwm_set_duty(0.);
 	  xputs("Start ADC calibration...");
 	  int32_t adc_cal_cnt = 0;
 	  int32_t cz_a, cz_b, cz_a_prev, cz_b_prev;
@@ -253,6 +345,9 @@ int main(void){
   }
 
   ctrl_init();
+
+  ctrl_set_mode(CTRL_POS);
+  ctrl_set_pos(pos);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -272,7 +367,7 @@ int main(void){
 		  enc_total += vel;
 /*
 		  xprintf("ADC :\r\n");
-		  for(volatile int i = 0; i < 20; i++){
+		  for(volatile int i = 0; i < ADC_BUFF_LEN; i++){
 			  xprintf("\t%02d : %4d\r\n", i, adc_get(i));
 		  }
 		  xputs("\r\n");
@@ -282,8 +377,12 @@ int main(void){
 		  cur_prev = cur;
 		  xprintf("Current : %5d %5d\r\n", (int32_t)(adc_get_cur() * 1000.), (int32_t)(cur * 1000.));
 		  xprintf("ADC EXT : %5d %5d\r\n", (int32_t)(adc_get_ext() * 1000.), (int32_t)(adc_get_ext_rate() * 100.));
+		  xprintf("Vel : %5d\r\n", (int32_t)(ctrl_get_vel() * 1000.));
+		  xprintf("Pos : %5d\r\n", (int32_t)(ctrl_get_pos() * 1000.));
 	  }
 	  uu_proc_command();
+	  pos = sin(pos_freq * 2.* M_PI * tick / 1000.) * 0.04 + 0.05;
+	  ctrl_set_pos(pos);
   }
   /* USER CODE END 3 */
 }

@@ -44,14 +44,19 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
-volatile static int32_t phase = 0;
-#define ADC_SAM_NUM (5)
-#define ADC_BUFF_LEN (10 * ADC_SAM_NUM)
-volatile static int16_t adc1_results[ADC_BUFF_LEN];
+#include "pwm.h"
+static int32_t phase = 0;
+int32_t adc1_results[ADC_BUFF_LEN];
 static float cur_zero_a;
 static float cur_zero_b;
-static float vref;
+static float vref = 1526.3181818181818181818181818182;
+static int32_t cur_zero_a_i;
+static int32_t cur_zero_b_i;
 static const float cur_zero_lpf_fo = 0.01;
+static float vbatt_gain;
+static float cur_gain;
+const static float ext_rate_gain = 0.00012210012210012210012210012210012;
+static float ext_gain;
 /* USER CODE END 0 */
 
 /* ADC1 init function */
@@ -98,7 +103,7 @@ void MX_ADC1_Init(void)
 
   LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_PDATAALIGN_HALFWORD);
 
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_HALFWORD);
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_1, LL_DMA_MDATAALIGN_WORD);
 
   /* ADC1 interrupt Init */
   NVIC_SetPriority(ADC1_2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
@@ -126,12 +131,12 @@ void MX_ADC1_Init(void)
   /**Configure Regular Channel 
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_1);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_7CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_2CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SINGLE_ENDED);
   /**Configure Regular Channel 
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_2);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_2, LL_ADC_SAMPLINGTIME_7CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_2, LL_ADC_SAMPLINGTIME_2CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_2, LL_ADC_SINGLE_ENDED);
   /**Configure Regular Channel 
   */
@@ -146,7 +151,7 @@ void MX_ADC1_Init(void)
   /**Configure Regular Channel 
   */
   LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_5, LL_ADC_CHANNEL_VREFINT);
-  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_VREFINT, LL_ADC_SAMPLINGTIME_7CYCLES_5);
+  LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_VREFINT, LL_ADC_SAMPLINGTIME_181CYCLES_5);
   LL_ADC_SetChannelSingleDiff(ADC1, LL_ADC_CHANNEL_VREFINT, LL_ADC_SINGLE_ENDED);
   LL_ADC_SetCommonPathInternalCh(__LL_ADC_COMMON_INSTANCE(ADC1), LL_ADC_PATH_INTERNAL_VREFINT);
 
@@ -155,6 +160,9 @@ void MX_ADC1_Init(void)
 /* USER CODE BEGIN 1 */
 void ADC1_2_IRQHandler(void)
 {
+	if(LL_ADC_IsActiveFlag_OVR(ADC1)){
+		phase = 0;
+	}
 	phase++;
 	phase &= ADC_SAM_NUM - 1;
 	LL_ADC_ClearFlag_EOS(ADC1);
@@ -180,12 +188,16 @@ void adc_init(void){
 	LL_ADC_REG_StartConversion(ADC1);
 }
 
-inline int16_t adc_get(uint32_t ch){
-	if(ch >= ADC_BUFF_LEN)return -1;
+inline int32_t adc_get(uint32_t ch){
+	//if(ch >= ADC_BUFF_LEN)return -1;
 	return adc1_results[ch];
 }
 
 inline float adc_get_vbatt(){
+	return (float)(adc1_results[2 + phase * 10] + adc1_results[7 + phase * 10]) * vbatt_gain;
+}
+
+inline float adc_get_vbatt_ave(){
 	float v = 0.;
 	for(int i = 2; i < ADC_BUFF_LEN; i+=5){
 		v += (float)adc1_results[i];
@@ -197,18 +209,25 @@ void adc_cur_cal_proc(){
 	cur_zero_a = cur_zero_a * (1. - cur_zero_lpf_fo) + ((float)adc1_results[5 + phase / 2 * 10]) * cur_zero_lpf_fo;
 	cur_zero_b = cur_zero_b * (1. - cur_zero_lpf_fo) + ((float)adc1_results[1 + phase / 2 * 10]) * cur_zero_lpf_fo;
 	vref = vref * (1. - cur_zero_lpf_fo) + (float)adc1_results[4 + phase / 2 * 10] * cur_zero_lpf_fo;
+	cur_zero_a_i = cur_zero_a;
+	cur_zero_b_i = cur_zero_b;
+	vbatt_gain = 6.765 / vref;
+	cur_gain = 1.23 / vref / 0.1 / 4.7;
 }
 
 inline float adc_get_cur(){
-	float a = ((float)adc1_results[5 + phase * 10] - cur_zero_a);
-	float b = ((float)adc1_results[1 + phase * 10] - cur_zero_b);
-	/*
-	if(a < b){
-		return a * 1.23 / vref / 0.1 / 4.7;
+	static float gain, gain_inv;
+	static float a, b;
+	gain = pwm_get_dir() * 5. + 0.5;
+	if(gain > 1.){
+		gain = 1.;
+	}else if(gain < 0.){
+		gain = 0.;
 	}
-	return -b * 1.23 / vref / 0.1 / 4.7;
-	*/
-	return (a - b) * 1.23 / 2. / vref / 0.1 / 4.7;
+	gain_inv = 1. - gain;
+	a = adc1_results[5 + phase * 10] - cur_zero_a_i;
+	b = cur_zero_b_i - adc1_results[1 + phase * 10];
+	return (a * gain_inv + b * gain) * cur_gain;
 }
 
 inline float adc_get_cur_ave(){
@@ -218,12 +237,6 @@ inline float adc_get_cur_ave(){
 		a += ((float)adc1_results[5 + i*10] - cur_zero_a);
 		b += ((float)adc1_results[1 + i*10] - cur_zero_b);
 	}
-	/*
-	if(a < b){
-		return a * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
-	}
-	return -b * 1.23 / vref / 0.1 / 4.7 / ADC_SAM_NUM;
-	*/
 	return (a - b) * 1.23 / 2. / vref / 0.1 / 4.7 / ADC_SAM_NUM;
 }
 
@@ -243,6 +256,11 @@ inline float adc_get_ext(){
 }
 
 inline float adc_get_ext_rate(){
+	//return (float)(adc1_results[3] + adc1_results[8]) / 4095. / 2.;
+	return (float)(adc1_results[3 + phase * 10] + adc1_results[8 + phase * 10]) * ext_rate_gain;
+}
+
+inline float adc_get_ext_rate_ave(){
 	float v = 0.;
 	for(int i = 3; i < ADC_BUFF_LEN; i+=5){
 		v += (float)adc1_results[i];

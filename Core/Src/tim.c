@@ -179,7 +179,7 @@ void MX_TIM6_Init(void)
 
   TIM_InitStruct.Prescaler = 0;
   TIM_InitStruct.CounterMode = LL_TIM_COUNTERMODE_UP;
-  TIM_InitStruct.Autoreload = 6400-LL_TIM_IC_FILTER_FDIV1_N2;
+  TIM_InitStruct.Autoreload = Control_Period;
   LL_TIM_Init(TIM6, &TIM_InitStruct);
   LL_TIM_EnableARRPreload(TIM6);
   LL_TIM_SetTriggerOutput(TIM6, LL_TIM_TRGO_RESET);

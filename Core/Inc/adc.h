@@ -51,14 +51,15 @@
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
-
+#define ADC_SAM_NUM (4)
+#define ADC_BUFF_LEN (10 * ADC_SAM_NUM)
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 void adc_init(void);
-int16_t adc_get(uint32_t ch);
+int32_t adc_get(uint32_t ch);
 float adc_get_vbatt();
 void adc_cur_cal_proc();
 int16_t adc_get_cur_zero(uint32_t side);

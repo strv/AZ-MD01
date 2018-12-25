@@ -51,6 +51,8 @@
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
+#define DAC_CH1 (LL_DAC_CHANNEL_1)
+#define DAC_CH2 (LL_DAC_CHANNEL_2)
 /* USER CODE END Private defines */
 
 void MX_DAC1_Init(void);
