@@ -27,42 +27,76 @@ static float vel_fo = 0.2;
 static float pos_fo = 0.1;
 static const float cur_dt_fo = 0.1;
 static const float peak_r = 0.999;
+static float volt_target = 0.;
 static float cur_target = 0.;
 static float vel_target = 0.;
 static float pos_target = 0.;
-static float rotor_r = 19.;
-static float rotor_l = 4.7e-3;
 //static float rotor_kv = 4.965; // volt / (m/s)
-static float rotor_kv = 2.5; // volt / (m/s)
 /* for 750 motor
 static float cur_gain_kp = 12.;
 static float cur_gain_ti = 0.00345;
 static float cur_gain_td = 0.;
 */
+/*
+ * for polol
+ * L = 160uH @ 100kHz
+ * L = 1340uH @ 10kHz
+ * C = 17nF @ 100kHz
+ * C = 190nF @ 10kHz
+ * DCR = 4 to 6
+ * Latency = 125 usec
+ * Time constant = 600 usec
+ * K = 0.87 [A] / 16.5*0.2 [V]
+ * Kp = 0.7 T / KL = 12.75
+ * Ti = T = 600u
+ */
+static float rotor_kv = 1. / 20.3; // volt / rps
+static float rotor_r = 6.;
+static float rotor_l = 0.5e-3;
+static const float blush_v_drop = 0.015;
+static const float min_move_cur = 0.06;
+static float cur_limit = 0.8;
+static float vel_limit = 1.;
+static float pos_limit_upper = 1.;
+static float pos_limit_lower = 0.;
+static float cur_gain_kp = 12.75;
+static float cur_gain_ti = 0.0006;
+static float cur_gain_td = 0.;
+static float vel_gain_kp = 0;
+static float vel_gain_ti = 0;
+static float vel_gain_td = 0;
+static float pos_gain_kp = 0;
+static float pos_gain_ti = 0;
+static float pos_gain_td = 0;
 /* for alps slider */
+/*
+static float rotor_kv = 2.5; // volt / (m/s)
+static float rotor_r = 19.;
+static float rotor_l = 4.7e-3;
+static const float blush_v_drop = 0.04;
+static const float min_move_cur = 0.02;
 static float cur_gain_kp = 45.;
 static float cur_gain_ti = 0.001;
 static float cur_gain_td = 0.;
 //static float vel_gain_kp = 0.291;
 //static float vel_gain_ti = 0.0085;
 //static float vel_gain_td = 0.;
-static float vel_gain_kp = 0.360;
+static float vel_gain_kp = 0.30;
 static float vel_gain_ti = 0.005;
-static float vel_gain_td = 0.0042;
-static float pos_gain_kp = 5.;
+static float vel_gain_td = 0.0021;
+static float pos_gain_kp = 4.;
 static float pos_gain_ti = 0.00075;
 static float pos_gain_td = 0.;
-static int32_t control_mode = CTRL_DUTY;
-static const int32_t c_v_ratio = 10;
-static const int32_t v_p_ratio = 10;
 static float cur_limit = 0.8;
 static float vel_limit = 1.5;
 static float pos_limit_upper = 0.095;
 static float pos_limit_lower = 0.005;
+*/
+static int32_t control_mode = CTRL_DUTY;
+static const int32_t c_v_ratio = 10;
+static const int32_t v_p_ratio = 10;
 static float vel = 0.;
 static float pos[LMS_N];
-static const float blush_v_drop = 0.04;
-static const float min_move_cur = 0.02;
 static const float vel_eta = 0.01;
 static float vel_beta;
 static float vel_d_fo = 0.5;
@@ -246,7 +280,7 @@ inline void ctrl_cur_irq(void){
 			cur_i_switch = 1.;
 		}
 
-		pwm_set_duty_nmrzd(volt / vbatt);
+		volt_target = volt;
 
 		cur_delta[2] = cur_delta[1];
 		cur_delta[1] = cur_delta[0];
@@ -256,6 +290,11 @@ inline void ctrl_cur_irq(void){
 			v_phase = 0;
 		}
 	}
+
+	if(control_mode >= CTRL_VOLT){
+		pwm_set_duty_nmrzd(volt_target / vbatt);
+	}
+
 	cur_prev = cur;
 	vel_prev = vel;
 	vbatt_prev = vbatt;
@@ -264,14 +303,14 @@ inline void ctrl_cur_irq(void){
 	}
 
 	//dac_set_mv(DAC_CH1, cur_target * 500 + 1500);
-	//dac_set_mv(DAC_CH1, cur * 500 + 1500);
+	dac_set_mv(DAC_CH2, cur * 500 + 1500);
 	//dac_set_mv(DAC_CH1, vel_target * 50000 + 1500);
 	//dac_set_mv(DAC_CH2, vel * 2000 + 1500);
 	//dac_set_mv(DAC_CH1, vel_delta[0] * 2000 + 1500);
 	//dac_set_mv(DAC_CH2, vel_delta_d * 2000 + 1500);
 	//dac_set_mv(DAC_CH2, vel_d * 2000 + 1500);
-	dac_set_mv(DAC_CH1, pos_target * 30000);
-	dac_set_mv(DAC_CH2, pos[0] * 30000);
+	//dac_set_mv(DAC_CH1, pos_target * 30000);
+	//dac_set_mv(DAC_CH2, pos[0] * 30000);
 	gpio_ext_reset();
 }
 
@@ -284,9 +323,15 @@ void ctrl_set_mode(int32_t mode){
 			ctrl_set_vel(0.);
 		case CTRL_CUR:
 			ctrl_set_cur(0.);
+		case CTRL_VOLT:
+			ctrl_set_volt(0.);
 		case CTRL_DUTY:
 			pwm_set_duty(0.);
 	}
+}
+
+void ctrl_set_volt(float voltage){
+	volt_target = voltage;
 }
 
 void ctrl_set_cur(float current){

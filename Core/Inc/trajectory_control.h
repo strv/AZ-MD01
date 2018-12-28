@@ -1,0 +1,4 @@
+#ifndef INC_TRAJECTORY_CONTROL_H_
+#define INC_TRAJECTORY_CONTROL_H_
+
+#endif

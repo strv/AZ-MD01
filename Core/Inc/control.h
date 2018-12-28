@@ -15,6 +15,7 @@
 
 typedef enum{
 	CTRL_DUTY,
+	CTRL_VOLT,
 	CTRL_CUR,
 	CTRL_VEL,
 	CTRL_POS
@@ -23,6 +24,7 @@ typedef enum{
 void ctrl_init(void);
 void ctrl_cur_irq(void);
 void ctrl_set_mode(int32_t mode);
+void ctrl_set_volt(float voltage);
 void ctrl_set_cur(float current);
 void ctrl_set_vel(float vel);
 void ctrl_set_pos(float pos);
