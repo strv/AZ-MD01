@@ -253,7 +253,7 @@ int main(void)
 	float cur_prev=0.;
 	float cur_fo=0.2;
 	float pos = 0.05;
-	float pos_freq = 5.0;
+	float pos_freq = 1.0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -346,8 +346,8 @@ int main(void)
 
   ctrl_init();
 
-  ctrl_set_mode(CTRL_POS);
-  ctrl_set_pos(pos);
+  //ctrl_set_mode(CTRL_POS);
+  //ctrl_set_pos(pos);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -376,13 +376,16 @@ int main(void)
 		  cur = cur_prev * (1. - cur_fo) + adc_get_cur_ave() * cur_fo;
 		  cur_prev = cur;
 		  xprintf("Current : %5d %5d\r\n", (int32_t)(adc_get_cur() * 1000.), (int32_t)(cur * 1000.));
+		  xprintf("Vel : %5d\r\n", (int32_t)(ctrl_get_vel() * 1000.));
+		  /*
 		  xprintf("ADC EXT : %5d %5d\r\n", (int32_t)(adc_get_ext() * 1000.), (int32_t)(adc_get_ext_rate() * 100.));
 		  xprintf("Vel : %5d\r\n", (int32_t)(ctrl_get_vel() * 1000.));
 		  xprintf("Pos : %5d\r\n", (int32_t)(ctrl_get_pos() * 1000.));
+		  */
 	  }
 	  uu_proc_command();
-	  pos = sin(pos_freq * 2.* M_PI * tick / 1000.) * 0.04 + 0.05;
-	  ctrl_set_pos(pos);
+	  //pos = sin(pos_freq * 2.* M_PI * tick / 1000.) * 0.04 + 0.05;
+	  //ctrl_set_pos(pos);
   }
   /* USER CODE END 3 */
 }

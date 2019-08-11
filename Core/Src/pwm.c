@@ -46,6 +46,8 @@ inline void pwm_set_duty_nmrzd(float val){
 	pwm_set_a(ton);
 	pwm_set_b(ton);
 
+	dac_set_mv(DAC_CH1, val * 1500 + 1500);
+
 	LL_TIM_OC_SetCompareCH5(PWM_TIM, ton_half - PWM_ADC_OFFSET);
 	LL_TIM_OC_SetCompareCH6(PWM_TIM, PWM_Period_Half + ton_half - (PWM_ADC_OFFSET * 2));
 }

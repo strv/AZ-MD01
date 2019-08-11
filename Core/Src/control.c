@@ -11,6 +11,7 @@
 #include "dac.h"
 #include "gpio.h"
 #include "pwm.h"
+#include "motor_profiles.h"
 #include <math.h>
 
 static const float delta_t = (float)(Control_Period + 1) / 64000000ULL;
@@ -68,6 +69,8 @@ static float vel_gain_td = 0;
 static float pos_gain_kp = 0;
 static float pos_gain_ti = 0;
 static float pos_gain_td = 0;
+MT_VEL_SENSOR mt_vel_sensor = MT_VEL_BEMF;
+MT_POS_SENSOR mt_pos_sensor = MT_POS_INT_VEL;
 /* for alps slider */
 /*
 static float rotor_kv = 2.5; // volt / (m/s)
@@ -91,6 +94,8 @@ static float cur_limit = 0.8;
 static float vel_limit = 1.5;
 static float pos_limit_upper = 0.095;
 static float pos_limit_lower = 0.005;
+MT_VEL_SENSOR mt_vel_sensor = MT_VEL_DIV_POS;
+MT_POS_SENSOR mt_pos_sensor = MT_POS_ADC;
 */
 static int32_t control_mode = CTRL_DUTY;
 static const int32_t c_v_ratio = 10;
@@ -100,6 +105,7 @@ static float pos[LMS_N];
 static const float vel_eta = 0.01;
 static float vel_beta;
 static float vel_d_fo = 0.5;
+float bemf_est = 0.;
 
 void rotor_pos_estimater(float* pcur, float* pcur_prev){
 	static float cur_dt;
@@ -159,8 +165,10 @@ inline void ctrl_cur_irq(void){
 	static float vbatt_prev = 0.;
 	static float volt = 0.;
 	static float volt_prev = 0.;
-	static float cur = 0.;
-	static float cur_prev = 0.;
+	static float volt_ff = 0.;
+	static float cur_meas = 0.;
+	static float cur_tmp = 0.;
+	static float cur_meas_prev = 0.;
 
 	static float cur_delta[3] = {0., 0., 0.};
 	static float cur_i_switch = 1.;
@@ -184,10 +192,15 @@ inline void ctrl_cur_irq(void){
 	gpio_ext_set();
 	vbatt = adc_get_vbatt();
 	vbatt = vbatt * cur_fo + vbatt_prev * (1. - cur_fo);
-	cur = adc_get_cur() * cur_fo + cur_prev * (1. - cur_fo);
+	cur_meas = adc_get_cur() * cur_fo + cur_meas_prev * (1. - cur_fo);
 	pos[0] = (adc_get_ext_rate() * 0.1) * pos_fo + pos[1] * (1. - pos_fo);
-	vel = ((pos[0] - pos[1]) * delta_t_inv) * vel_fo + vel_prev * (1. - vel_fo);
-	rotor_pos_estimater(&cur, &cur_prev);
+	if(mt_vel_sensor & MT_VEL_BEMF){
+		vel = bemf / rotor_kv;
+	}else if(mt_vel_sensor & MT_VEL_DIV_POS){
+		vel = ((pos[0] - pos[1]) * delta_t_inv) * vel_fo + vel_prev * (1. - vel_fo);
+	}else if(mt_vel_sensor & MT_VEL_RIPPLE_CNT){
+		rotor_pos_estimater(&cur_meas, &cur_meas_prev);
+	}
 
 	if(p_phase == 0 && control_mode >= CTRL_POS){
 		pos_delta[0] = (pos_target - pos[0]);
@@ -222,28 +235,30 @@ inline void ctrl_cur_irq(void){
 		vel_delta_d = (vel_eta * vel_beta - 1.) * vel_d
 				+ vel_beta * (vel_prev - vel);
 		vel_d += vel_delta_d;
-		cur_target = cur_target_prev +
+		cur_tmp = cur_tmp_prev +
 				vel_gain_kp * (
 						(vel_delta[0] - vel_delta[1])
 						+ vel_delta_i * vel_i_switch
 						+ vel_delta_d
 				);
-		cur_target_prev = cur_target;
+		cur_tmp_prev = cur_tmp;
 
-		if(cur_target > 0.){
-			cur_target += min_move_cur;
-		}else if(cur_target < 0.){
-			cur_target -= min_move_cur;
+		if(cur_tmp > 0.){
+			cur_tmp += min_move_cur;
+		}else if(cur_tmp < 0.){
+			cur_tmp -= min_move_cur;
 		}
-		if(cur_target > cur_limit){
+		if(cur_tmp > cur_limit){
 			vel_i_switch = 0.;
-			cur_target = cur_limit;
-		}else if(cur_target < -cur_limit){
+			cur_tmp = cur_limit;
+		}else if(cur_tmp < -cur_limit){
 			vel_i_switch = 0.;
-			cur_target = -cur_limit;
+			cur_tmp = -cur_limit;
 		}else{
 			vel_i_switch = 1.;
 		}
+
+		cur_target = cur_tmp;
 
 		vel_delta[2] = vel_delta[1];
 		vel_delta[1] = vel_delta[0];
@@ -255,7 +270,7 @@ inline void ctrl_cur_irq(void){
 	}
 
 	if(control_mode >= CTRL_CUR){
-		cur_delta[0] = (cur_target - cur);
+		cur_delta[0] = (cur_target - cur_meas);
 		cur_delta_i = delta_t / cur_gain_ti * cur_delta[0];
 		volt = volt_prev
 				+ cur_gain_kp * (
@@ -264,7 +279,12 @@ inline void ctrl_cur_irq(void){
 						);
 
 		volt_prev = volt;
-		volt += cur_target * rotor_r + vel * rotor_kv;
+		if(mt_vel_sensor & MT_VEL_BEMF){
+			bemf_est = volt;
+			volt += cur_target * rotor_r;// - (cur_target - cur_target_prev) * rotor_l / delta_t;
+		}else{
+			volt += cur_target * rotor_r + vel * rotor_kv;
+		}
 		if(volt > 0.){
 			volt += blush_v_drop;
 		}else if(volt < 0.){
@@ -295,7 +315,8 @@ inline void ctrl_cur_irq(void){
 		pwm_set_duty_nmrzd(volt_target / vbatt);
 	}
 
-	cur_prev = cur;
+	cur_target_prev = cur_target;
+	cur_meas_prev = cur_meas;
 	vel_prev = vel;
 	vbatt_prev = vbatt;
 	for(int i = 1; i < LMS_N; i++){
@@ -303,7 +324,7 @@ inline void ctrl_cur_irq(void){
 	}
 
 	//dac_set_mv(DAC_CH1, cur_target * 500 + 1500);
-	dac_set_mv(DAC_CH2, cur * 500 + 1500);
+	dac_set_mv(DAC_CH2, cur_meas * 500 + 1500);
 	//dac_set_mv(DAC_CH1, vel_target * 50000 + 1500);
 	//dac_set_mv(DAC_CH2, vel * 2000 + 1500);
 	//dac_set_mv(DAC_CH1, vel_delta[0] * 2000 + 1500);
